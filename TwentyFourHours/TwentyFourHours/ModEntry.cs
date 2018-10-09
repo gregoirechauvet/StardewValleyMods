@@ -12,7 +12,7 @@ namespace TwentyFourHours
     /// <summary>The mod entry point.</summary>
     public class ModEntry : Mod, IAssetEditor
     {
-        internal static IMonitor Logger;
+        // internal static IMonitor Logger;
 
         /*********
         ** Public methods
@@ -77,7 +77,8 @@ namespace TwentyFourHours
         }
     }
 
-    [HarmonyPatch(typeof(Game1), "getTimeOfDayString", new Type[] { typeof(int) })]
+    [HarmonyPatch(typeof(Game1))]
+    [HarmonyPatch("getTimeOfDayString")]
     class GetTimeOfDayPatch
     {
         static bool Prefix()
@@ -91,7 +92,8 @@ namespace TwentyFourHours
         }
     }
 
-    [HarmonyPatch(typeof(StardewValley.Menus.DayTimeMoneyBox), "draw", new Type[] { typeof(Microsoft.Xna.Framework.Graphics.SpriteBatch) })]
+    [HarmonyPatch(typeof(StardewValley.Menus.DayTimeMoneyBox))]
+    [HarmonyPatch("draw")]
     class DayTimeMoneyBoxPatch
     {
         static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -131,7 +133,7 @@ namespace TwentyFourHours
                 }
             }
 
-            // Injection detail:
+            // Injection details:
             // 1 - Load Game1.timeOfDay on the execution stack
             // 2 - Call our internal method to compute the time
             // 3 - Save the variable with the instruction we have found earlier
