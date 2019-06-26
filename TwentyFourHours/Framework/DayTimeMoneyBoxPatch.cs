@@ -1,17 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using Harmony;
+using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 
 namespace TwentyFourHours.Framework
 {
-    [HarmonyPatch(typeof(StardewValley.Menus.DayTimeMoneyBox))]
-    [HarmonyPatch("draw")]
     internal class DayTimeMoneyBoxPatch
     {
-        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             // Algorithm for patching this method:
             // 1 - Find the unique Ldstr instruction with ":"
@@ -29,7 +27,7 @@ namespace TwentyFourHours.Framework
             {
                 var instruction = instructionsList[i];
 
-                if (instruction.opcode == OpCodes.Ldstr && instruction.operand as String == ":")
+                if (instruction.opcode == OpCodes.Ldstr && instruction.operand as string == ":")
                 {
                     foundColon = true;
                 }
@@ -41,7 +39,7 @@ namespace TwentyFourHours.Framework
                     foundInstruction = true;
                 }
 
-                if (foundInstruction && instruction.opcode == OpCodes.Ldsfld && instruction.operand != null && instruction.operand.ToString() == "Microsoft.Xna.Framework.Graphics.SpriteFont dialogueFont")
+                if (foundInstruction && instruction.opcode == OpCodes.Ldsfld && instruction.operand != null && instruction.operand.ToString() == $"{typeof(SpriteFont).FullName} dialogueFont")
                 {
                     foundIndex = i;
                     foundInstruction = false;
@@ -53,16 +51,16 @@ namespace TwentyFourHours.Framework
             // 2 - Call our internal method to compute the time
             // 3 - Save the variable with the instruction we have found earlier
             CodeInstruction[] insertions = {
-                new CodeInstruction(OpCodes.Ldsfld, typeof(Game1).GetField("timeOfDay")),
-                new CodeInstruction(OpCodes.Call, typeof(DayTimeMoneyBoxPatch).GetMethod("ComputeTime")),
-                instructionMemory,
+                new CodeInstruction(OpCodes.Ldsfld, typeof(Game1).GetField(nameof(Game1.timeOfDay))),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(DayTimeMoneyBoxPatch), nameof(DayTimeMoneyBoxPatch.ComputeTime))),
+                instructionMemory
             };
 
             instructionsList.InsertRange(foundIndex + 1, insertions);
             return instructionsList.AsEnumerable();
         }
 
-        public static string ComputeTime(int time)
+        private static string ComputeTime(int time)
         {
             return ModEntry.ConvertTime(time);
         }

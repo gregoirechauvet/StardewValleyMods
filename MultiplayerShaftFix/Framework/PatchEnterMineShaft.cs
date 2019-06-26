@@ -8,13 +8,11 @@ using StardewValley.Locations;
 
 namespace MultiplayerShaftFix.Framework
 {
-    [HarmonyPatch(typeof(MineShaft))]
-    [HarmonyPatch("enterMineShaft")]
     internal class PatchEnterMineShaft
     {
-        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            // Aglorithm for patching this method:
+            // Algorithm for patching this method:
             // 1 - Find the latest Stloc_0 (i.e. level variable that have been computed)
             // 2 - Compute another value based on the current day and the current mine level
             // 3 - Replace the previous value
@@ -37,7 +35,7 @@ namespace MultiplayerShaftFix.Framework
             // 3 - Save the variable
             CodeInstruction[] insertions = {
                 new CodeInstruction(OpCodes.Ldarg_0),
-                new CodeInstruction(OpCodes.Call, typeof(PatchEnterMineShaft).GetMethod("ComputeLevels")),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(PatchEnterMineShaft), nameof(PatchEnterMineShaft.ComputeLevels))),
                 new CodeInstruction(OpCodes.Stloc_0)
             };
 
@@ -47,7 +45,7 @@ namespace MultiplayerShaftFix.Framework
             return instructionsList.AsEnumerable();
         }
 
-        static int ComputeInitializer(MineShaft instance)
+        private static int ComputeInitializer(MineShaft instance)
         {
             // Use `* 100` on DaysSinceStart because I don't want to add both value directly
             // If I did, you will be able to predict the values of the shaft, because their value will change from 1 floor everyday
@@ -59,7 +57,7 @@ namespace MultiplayerShaftFix.Framework
             return (SDate.Now().DaysSinceStart * 100 + instance.mineLevel) * 1000;
         }
 
-        public static int ComputeLevels(MineShaft instance)
+        private static int ComputeLevels(MineShaft instance)
         {
             int initializer = PatchEnterMineShaft.ComputeInitializer(instance);
 

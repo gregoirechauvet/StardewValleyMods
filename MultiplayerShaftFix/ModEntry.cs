@@ -1,5 +1,7 @@
 ﻿using Harmony;
+using MultiplayerShaftFix.Framework;
 using StardewModdingAPI;
+using StardewValley.Locations;
 
 namespace MultiplayerShaftFix
 {
@@ -13,8 +15,11 @@ namespace MultiplayerShaftFix
         /// <param name="helper">Provides simplified APIs for writing mods.</param>
         public override void Entry(IModHelper helper)
         {
-            var harmony = HarmonyInstance.Create("com.github.princeleto.twentyfourhours");
-            harmony.PatchAll(System.Reflection.Assembly.GetExecutingAssembly());
+            var harmony = HarmonyInstance.Create(this.ModManifest.UniqueID);
+            harmony.Patch(
+                original: AccessTools.Method(typeof(MineShaft), nameof(MineShaft.enterMineShaft)),
+                transpiler: new HarmonyMethod(typeof(PatchEnterMineShaft), nameof(PatchEnterMineShaft.Transpiler))
+            );
         }
     }
 }
